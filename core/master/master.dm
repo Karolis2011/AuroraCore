@@ -124,7 +124,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 				msg = "The [BadBoy.name] subsystem seems to be destabilizing the MC and will be offlined."
 				BadBoy.flags |= SS_NO_FIRE
 		if(msg)
-			log_notice("<span class='danger'>[msg]</span>")				
+			log_notice("<span class='danger'>[msg]</span>")
 			log_mc(msg)
 
 	if (istype(Master.subsystems))
@@ -169,10 +169,10 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 	initializing = FALSE
 	initialization_time_taken = time
 
-	var/msg = "Initializations complete within [time] second[time == 1 ? "" : "s"]!"
+	var/msg = "Initializations complete within [time] second\s!"
 	log_mc(msg)
-	log_notice(span("danger", msg))
-	world.log << msg
+	log_notice(SPAN_DANGER(msg))
+	world.log <<  msg
 
 	// Sort subsystems by display setting for easy access.
 	sortTim(subsystems, /proc/cmp_subsystem_display)
@@ -341,7 +341,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 		src.sleep_delta = MC_AVERAGE_FAST(src.sleep_delta, sleep_delta)
 		CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 		if (processing * sleep_delta <= world.tick_lag)
-			CURRENT_TICKLIMIT -= (TICK_LIMIT_RUNNING)
+			CURRENT_TICKLIMIT -= (TICK_LIMIT_RUNNING * 0.25) //reserve the tail 1/4 of the next tick for the mc if we plan on running next tick
 
 		sleep(world.tick_lag * (processing * sleep_delta))
 
@@ -370,7 +370,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 		if (SS_flags & SS_NO_FIRE)
 			subsystemstocheck -= SS
 			continue
-		if (!(SS_flags & SS_TICKER) && (SS_flags & SS_KEEP_TIMING) && SS.last_fire + (SS.wait * 0.75) > world.time)
+		if ((SS_flags & (SS_TICKER|SS_KEEP_TIMING)) == SS_KEEP_TIMING && SS.last_fire + (SS.wait * 0.75) > world.time)
 			continue
 		SS.enqueue()
 	. = 1
@@ -413,14 +413,15 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 			//	in those cases, so we just let them run)
 			if (queue_node_flags & SS_NO_TICK_CHECK)
 				if (queue_node.tick_usage > TICK_LIMIT_RUNNING - world.tick_usage && ran_non_ticker)
-					queue_node.queued_priority += queue_priority_count * 0.10
-					queue_priority_count -= queue_node_priority
-					queue_priority_count += queue_node.queued_priority
-					current_tick_budget -= queue_node_priority
-					queue_node = queue_node.queue_next
+					if (!(queue_node_flags & SS_BACKGROUND))
+						queue_node.queued_priority += queue_priority_count * 0.1
+						queue_priority_count -= queue_node_priority
+						queue_priority_count += queue_node.queued_priority
+						current_tick_budget -= queue_node_priority
+						queue_node = queue_node.queue_next
 					continue
 
-			if ((queue_node_flags & SS_BACKGROUND) && !bg_calc)
+			if (!bg_calc && (queue_node_flags & SS_BACKGROUND))
 				current_tick_budget = queue_priority_count_bg
 				bg_calc = TRUE
 
@@ -437,7 +438,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 			if (!(queue_node_flags & SS_TICKER))
 				ran_non_ticker = TRUE
 			ran = TRUE
-			
+
 			queue_node_paused = (queue_node.state == SS_PAUSED || queue_node.state == SS_PAUSING)
 			last_type_processed = queue_node
 
@@ -473,7 +474,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 			queue_node.paused_ticks = 0
 			queue_node.paused_tick_usage = 0
 
-			if (queue_node_flags & SS_BACKGROUND) //update our running total
+			if (bg_calc) //update our running total
 				queue_priority_count_bg -= queue_node_priority
 			else
 				queue_priority_count -= queue_node_priority
@@ -482,7 +483,7 @@ var/CURRENT_TICKLIMIT = TICK_LIMIT_RUNNING
 			queue_node.times_fired++
 
 			if (queue_node_flags & SS_TICKER)
-				queue_node.next_fire = world.time + (world.tick_lag * (queue_node.wait + (queue_node.tick_overrun/100)))
+				queue_node.next_fire = world.time + (world.tick_lag * queue_node.wait)
 			else if (queue_node_flags & SS_POST_FIRE_TIMING)
 				queue_node.next_fire = world.time + queue_node.wait + (world.tick_lag * (queue_node.tick_overrun/100))
 			else if (queue_node_flags & SS_KEEP_TIMING)

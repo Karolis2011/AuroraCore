@@ -23,9 +23,13 @@
 #define DAY *864000
 #define DAYS *864000
 
+#define INFINITY 1.#INF
 
 #define TICKS *world.tick_lag
 
 #define DS2TICKS(DS) (DS/world.tick_lag)
 
 #define TICKS2DS(T) (T TICKS)
+
+/// Value or the next multiple of divisor in a positive direction. Ceilm(-1.5, 0.3) = -1.5 , Ceilm(-1.5, 0.4) = -1.2
+#define Ceilm(value, divisor) ( -round(-(value) / (divisor)) * (divisor) )

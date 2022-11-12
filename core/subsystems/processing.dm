@@ -25,10 +25,20 @@ var/datum/controller/subsystem/processing/SSprocessing
 	while(current_run.len)
 		var/datum/thing = current_run[current_run.len]
 		current_run.len--
-		if(thing)
-			if (thing.process() == PROCESS_KILL)
-				STOP_PROCESSING(src, thing)
+		if(!QDELETED(thing))
+			if (thing.process(wait, times_fired) == PROCESS_KILL)
+				stop_processing(thing)
 		else
 			processing -= thing
 		if (MC_TICK_CHECK)
 			return
+
+// Helper so PROCESS_KILL works.
+/datum/controller/subsystem/processing/proc/stop_processing(datum/D)
+	STOP_PROCESSING(src, D)
+
+/datum/controller/subsystem/processing/ExplosionStart()
+	suspend()
+
+/datum/controller/subsystem/processing/ExplosionEnd()
+	wake() 

@@ -2,6 +2,10 @@
 	var/initialized = FALSE
 
 /atom/New(loc, ...)
+	// For the DMM Suite.
+	if(use_preloader && (type == _preloader.target_path))//in case the instanciated atom is creating other atoms in New()
+		_preloader.load(src)
+
 	var/do_initialize = SSatoms.initialized
 	if(do_initialize > INITIALIZATION_INSSATOMS)
 		args[1] = do_initialize == INITIALIZATION_INNEW_MAPLOAD

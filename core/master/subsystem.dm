@@ -2,10 +2,10 @@
 
 /datum/controller/subsystem
 	// Metadata; you should define these.
-	name = "fire coderbus"        //name of the subsystem
-	var/init_order = SS_INIT_MISC //order of initialization. Higher numbers are initialized first, lower numbers later. Can be decimal and negative values.
-	var/wait = 20                 //time to wait between each call to fire(). Must be a positive integer. In ticks if SS_TICKER, deciseconds otherwise.
-	var/priority = 50             //When mutiple subsystems need to run in the same tick, higher priority subsystems will run first and be given a higher share of the tick before MC_TICK_CHECK triggers a sleep.
+	name = "fire coderbus"              //name of the subsystem
+	var/init_order = SS_INIT_MISC       //order of initialization. Higher numbers are initialized first, lower numbers later. Can be decimal and negative values.
+	var/wait = 20                       //time to wait between each call to fire(). Must be a positive integer. In ticks if SS_TICKER, deciseconds otherwise.
+	var/priority = SS_PRIORITY_DEFAULT  //When mutiple subsystems need to run in the same tick, higher priority subsystems will run first and be given a higher share of the tick before MC_TICK_CHECK triggers a sleep.
 
 	var/flags = 0			//see master_controller.dm in __defines. Most flags must be set on world start to take full effect. (You can also restart the mc to force them to process again)
 
@@ -67,6 +67,7 @@
 	throw EXCEPTION("Subsystem [src]([type]) does not fire() but did not set the SS_NO_FIRE flag. Please add the SS_NO_FIRE flag to any subsystem that doesn't fire so it doesn't get added to the processing list and waste cpu.")
 
 /datum/controller/subsystem/Destroy()
+	SHOULD_CALL_PARENT(FALSE)
 	dequeue()
 	can_fire = 0
 	flags |= SS_NO_FIRE
@@ -88,8 +89,8 @@
 		queue_node_priority = queue_node.queued_priority
 		queue_node_flags = queue_node.flags
 
-		if (queue_node_flags & SS_TICKER)
-			if (!(SS_flags & SS_TICKER))
+		if (queue_node_flags & (SS_TICKER|SS_BACKGROUND) == SS_TICKER)
+			if ((SS_flags & (SS_TICKER|SS_BACKGROUND)) != SS_TICKER)
 				continue
 			if (queue_node_priority < SS_priority)
 				break
@@ -170,13 +171,13 @@
 /datum/controller/subsystem/Initialize(start_timeofday)
 	var/time = (REALTIMEOFDAY - start_timeofday) / 10
 	init_time = time
-	var/msg = "Initialized [name] subsystem within [time] second[time == 1 ? "" : "s"]!"
-	world << "<span class='danger'>[msg]</span>"
-	world.log << "SS Init: [msg]"
+	var/msg = "Initialized [name] subsystem within [time] second\s!"
+	log_notice(SPAN_DANGER(msg))
+	world.log <<  "SS Init: [msg]"
 	return time
 
 //hook for printing stats to the "MC" statuspanel for admins to see performance and related stats etc.
-/datum/controller/subsystem/stat_entry(msg)
+/datum/controller/subsystem/stat_entry(var/msg)
 	if(!statclick)
 		statclick = new/obj/effect/statclick/debug(null, "Initializing...", src)
 

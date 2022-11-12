@@ -4,7 +4,7 @@
   * Pretty much pokes the MC to make sure it's still alive.
  **/
 
-#define FAILSAFE_MSG(msg) world << "<big><em><font color='red'>FAILSAFE: </font><font color='black'>[msg]</font></em></big>"
+#define FAILSAFE_MSG(msg) log_notice("<big><em><span class='warning'>FAILSAFE: </span><font color='black'>[msg]</font></em></big>")
 #define log_failsafe(msg) world.log << "Failsafe: [msg]"
 
 var/datum/controller/failsafe/Failsafe

@@ -33,6 +33,7 @@
 // *MUST* have New() use NEW_SS_GLOBAL.
 var/list/panic_targets = list(
 	"Garbage" = /datum/controller/subsystem/garbage_collector,
+	"Timer" = /datum/controller/subsystem/timer
 )
 
 // Subsystems that might do funny things or lose data if hard-restarted.
@@ -40,21 +41,21 @@ var/list/panic_targets = list(
 var/list/panic_targets_data_loss = list()
 
 /client/verb/cmd_ss_panic(controller in panic_targets)
-	set category = "MC Debug"
+	set category = "Server"
 	set name = "Force-Restart Subsystem"
 	set desc = "Hard-restarts a subsystem. May break things, use with caution."
 
 	if (alert("Hard-Restart [controller]? Use with caution, this may break things.", "Subsystem Restart", "No", "No", "Yes") != "Yes")
-		usr << "Aborted."
+		to_chat(usr, "Aborted.")
 		return
 
 	// If it's marked as potentially causing data-loss (like SStimer), require another confirmation.
 	if (panic_targets_data_loss[controller])
 		if (alert("This subsystem ([controller]) may cause data loss or strange behavior if restarted! Continue?", "AAAAAA", "No", "No", "Yes") != "Yes")
-			usr << "Aborted."
+			to_chat(usr, "Aborted.")
 			return
 
-	world << "SS PANIC: [controller] hard-restart by [usr]!"
+	log_debug("SS PANIC: [controller] hard-restart by [usr]!")
 
 	// NEW_SS_GLOBAL will handle destruction of old controller & data transfer, just create a new one and add it to the MC.
 	var/ctype = panic_targets[controller]

@@ -36,3 +36,18 @@
 #define to_file(file_entry, file_content)                   file_entry << file_content
 #define show_browser(target, browser_content, browser_name) target << browse(browser_content, browser_name)
 #define send_rsc(target, rsc_content, rsc_name)             target << browse_rsc(rsc_content, rsc_name)
+
+// Maploader bounds indices
+#define MAP_MINX 1
+#define MAP_MINY 2
+#define MAP_MINZ 3
+#define MAP_MAXX 4
+#define MAP_MAXY 5
+#define MAP_MAXZ 6
+
+// Setting this much higher than 1024 could allow spammers to DOS the server easily.
+#define MAX_MESSAGE_LEN       1024
+#define MAX_PAPER_MESSAGE_LEN 3072
+#define MAX_BOOK_MESSAGE_LEN  9216
+#define MAX_LNAME_LEN         64
+#define MAX_NAME_LEN          63
